@@ -69,8 +69,18 @@ No third-party dependencies, standard library only.
 pip install -e .
 ```
 
+## Running tests
+
+The test suite uses pytest, which is not a runtime dependency of the
+package itself:
+
+```
+pip install pytest
+pytest
+```
+
 ## Status
 
 Early skeleton. Four checks exist today: duplicate URLs, `javascript:` URLs,
 empty titles, and empty folders. No config file yet, no way to disable a
-single check, no test suite committed.
+single check.
