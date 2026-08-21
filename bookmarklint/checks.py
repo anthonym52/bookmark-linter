@@ -17,6 +17,9 @@ class Finding:
     message: str
 
 
+CHECK_NAMES = ("duplicate-url", "javascript-url", "empty-title", "empty-folder")
+
+
 def find_duplicate_urls(bookmarks):
     """Flag bookmarks that repeat a URL already seen earlier in the file."""
     first_seen_at = {}
@@ -88,11 +91,23 @@ def find_empty_folders(bookmarks, folders):
     return findings
 
 
-def lint_all(bookmarks, folders):
-    """Run every check and return findings sorted by line number."""
+def lint_all(bookmarks, folders, enabled_checks=None):
+    """Run the enabled checks and return findings sorted by line number.
+
+    enabled_checks, if given, is an iterable of names from CHECK_NAMES; any
+    check not in it is skipped. Defaults to running every check.
+    """
+    if enabled_checks is None:
+        enabled_checks = CHECK_NAMES
+    enabled_checks = set(enabled_checks)
+
     findings = []
-    findings.extend(find_duplicate_urls(bookmarks))
-    findings.extend(find_javascript_urls(bookmarks))
-    findings.extend(find_empty_titles(bookmarks))
-    findings.extend(find_empty_folders(bookmarks, folders))
+    if "duplicate-url" in enabled_checks:
+        findings.extend(find_duplicate_urls(bookmarks))
+    if "javascript-url" in enabled_checks:
+        findings.extend(find_javascript_urls(bookmarks))
+    if "empty-title" in enabled_checks:
+        findings.extend(find_empty_titles(bookmarks))
+    if "empty-folder" in enabled_checks:
+        findings.extend(find_empty_folders(bookmarks, folders))
     return sorted(findings, key=lambda finding: finding.line)

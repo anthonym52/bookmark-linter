@@ -122,3 +122,14 @@ def test_lint_all_combines_and_sorts_by_line():
     assert [finding.line for finding in findings] == [5, 10, 10]
     checks_at_line_10 = {finding.check for finding in findings if finding.line == 10}
     assert checks_at_line_10 == {"javascript-url", "empty-title"}
+
+
+def test_lint_all_skips_checks_not_in_enabled_checks():
+    bookmarks = (make_bookmark(title="", url="javascript:void(0)", line=10),)
+    findings = lint_all(bookmarks, (), enabled_checks={"javascript-url"})
+    assert [finding.check for finding in findings] == ["javascript-url"]
+
+
+def test_lint_all_with_no_enabled_checks_runs_nothing():
+    bookmarks = (make_bookmark(title="", url="javascript:void(0)", line=10),)
+    assert lint_all(bookmarks, (), enabled_checks=()) == []

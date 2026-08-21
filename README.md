@@ -39,6 +39,24 @@ bookmarks.html:90: empty-folder: folder 'Someday' contains no bookmarks
 
 Exit code is 1 if any findings were reported, 0 if the file is clean.
 
+## Disabling checks
+
+By default all four checks run. To turn individual checks off, pass
+`--config` with a path to an INI file with a `[checks]` section:
+
+```ini
+[checks]
+empty-folder = false
+```
+
+Checks left out of the file keep running; only the ones listed as `false`
+are skipped. Check names match the ones printed in the output:
+`duplicate-url`, `javascript-url`, `empty-title`, `empty-folder`.
+
+```
+bookmarklint --config bookmarklint.ini bookmarks.html
+```
+
 ## Using it as a library
 
 The parser and every check are pure functions: given the same input they
@@ -82,5 +100,5 @@ pytest
 ## Status
 
 Early skeleton. Four checks exist today: duplicate URLs, `javascript:` URLs,
-empty titles, and empty folders. No config file yet, no way to disable a
-single check.
+empty titles, and empty folders. Each can be turned off via `--config`. No
+JSON output mode yet, and nothing checks whether a URL is malformed.
