@@ -8,6 +8,7 @@ files.
 """
 
 from dataclasses import dataclass
+from urllib.parse import urlsplit
 
 
 @dataclass(frozen=True)
@@ -17,7 +18,17 @@ class Finding:
     message: str
 
 
-CHECK_NAMES = ("duplicate-url", "javascript-url", "empty-title", "empty-folder")
+CHECK_NAMES = (
+    "duplicate-url",
+    "javascript-url",
+    "empty-title",
+    "empty-folder",
+    "malformed-url",
+)
+
+# Schemes where a missing host is normal rather than a sign the URL got
+# mangled, e.g. by a bad find-and-replace on export.
+_SCHEMES_WITHOUT_REQUIRED_HOST = {"file", "about", "data", "mailto", "tel"}
 
 
 def find_duplicate_urls(bookmarks):
@@ -73,6 +84,48 @@ def find_empty_titles(bookmarks):
     return findings
 
 
+def _malformed_reason(url):
+    """Return a description of what's wrong with url, or None if it's fine.
+
+    This never touches the network; it only looks at the URL's shape. A URL
+    can be well-formed and still 404, and this makes no attempt to catch
+    that - it's aimed at the export-time mistakes that are easy to spot
+    statically: no scheme, stray whitespace from a bad copy-paste, or a
+    http(s) link with no host at all.
+    """
+    if any(character.isspace() for character in url):
+        return "URL contains whitespace"
+    scheme, netloc, _path, _query, _fragment = urlsplit(url)
+    if not scheme:
+        return "URL has no scheme"
+    if not netloc and scheme not in _SCHEMES_WITHOUT_REQUIRED_HOST:
+        return f"{scheme}: URL has no host"
+    return None
+
+
+def find_malformed_urls(bookmarks):
+    """Flag URLs that are missing a scheme, missing a host, or contain whitespace.
+
+    javascript: bookmarklets are covered by find_javascript_urls instead, and
+    bookmarks with no URL at all aren't this check's concern.
+    """
+    findings = []
+    for bookmark in bookmarks:
+        url = bookmark.url.strip()
+        if not url or url.lower().startswith("javascript:"):
+            continue
+        reason = _malformed_reason(url)
+        if reason:
+            findings.append(
+                Finding(
+                    line=bookmark.line,
+                    check="malformed-url",
+                    message=f"{reason} ({bookmark.url})",
+                )
+            )
+    return findings
+
+
 def find_empty_folders(bookmarks, folders):
     """Flag folders that hold neither a bookmark nor a subfolder."""
     paths_with_bookmarks = {bookmark.folder for bookmark in bookmarks}
@@ -110,4 +163,6 @@ def lint_all(bookmarks, folders, enabled_checks=None):
         findings.extend(find_empty_titles(bookmarks))
     if "empty-folder" in enabled_checks:
         findings.extend(find_empty_folders(bookmarks, folders))
+    if "malformed-url" in enabled_checks:
+        findings.extend(find_malformed_urls(bookmarks))
     return sorted(findings, key=lambda finding: finding.line)

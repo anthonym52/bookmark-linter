@@ -3,8 +3,9 @@
 A linter for exported browser bookmark files. Point it at an HTML export from
 Chrome, Firefox, or Safari and it reports problems by line number: duplicate
 URLs saved twice under different folders, `javascript:` bookmarklets sitting
-in the same list as real links, bookmarks with no title, and folders that
-hold nothing.
+in the same list as real links, bookmarks with no title, folders that hold
+nothing, and URLs that are missing a scheme, missing a host, or contain
+whitespace.
 
 Bookmark files accumulate this kind of cruft for years because nothing in
 the browser UI ever points it out. This tool reads the export and tells you
@@ -34,6 +35,7 @@ Example output:
 bookmarks.html:42: duplicate-url: duplicate bookmark for https://example.com/ (first seen at line 17)
 bookmarks.html:58: javascript-url: bookmarklet ('Toggle Reader View') stored as a javascript: URL
 bookmarks.html:71: empty-title: bookmark has no title (https://old-project.example.org)
+bookmarks.html:83: malformed-url: URL has no host (https:///broken)
 bookmarks.html:90: empty-folder: folder 'Someday' contains no bookmarks
 ```
 
@@ -41,7 +43,7 @@ Exit code is 1 if any findings were reported, 0 if the file is clean.
 
 ## Disabling checks
 
-By default all four checks run. To turn individual checks off, pass
+By default all five checks run. To turn individual checks off, pass
 `--config` with a path to an INI file with a `[checks]` section:
 
 ```ini
@@ -51,7 +53,8 @@ empty-folder = false
 
 Checks left out of the file keep running; only the ones listed as `false`
 are skipped. Check names match the ones printed in the output:
-`duplicate-url`, `javascript-url`, `empty-title`, `empty-folder`.
+`duplicate-url`, `javascript-url`, `empty-title`, `empty-folder`,
+`malformed-url`.
 
 ```
 bookmarklint --config bookmarklint.ini bookmarks.html
@@ -99,6 +102,9 @@ pytest
 
 ## Status
 
-Early skeleton. Four checks exist today: duplicate URLs, `javascript:` URLs,
-empty titles, and empty folders. Each can be turned off via `--config`. No
-JSON output mode yet, and nothing checks whether a URL is malformed.
+Early skeleton. Five checks exist today: duplicate URLs, `javascript:` URLs,
+empty titles, empty folders, and malformed URLs (missing scheme, missing
+host, or stray whitespace). Each can be turned off via `--config`. The
+malformed-URL check is purely structural - it never makes a network request,
+so it won't catch a well-formed URL that happens to be dead. No JSON output
+mode yet.

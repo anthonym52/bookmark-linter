@@ -3,6 +3,7 @@ from bookmarklint.checks import (
     find_empty_folders,
     find_empty_titles,
     find_javascript_urls,
+    find_malformed_urls,
     lint_all,
 )
 from bookmarklint.parser import Bookmark, Folder
@@ -72,6 +73,52 @@ def test_find_empty_titles_flags_blank_and_whitespace_only():
     findings = find_empty_titles(bookmarks)
     assert {finding.line for finding in findings} == {1, 2}
     assert all(finding.check == "empty-title" for finding in findings)
+
+
+def test_find_malformed_urls_flags_missing_scheme():
+    bookmarks = (make_bookmark(url="example.com/page", line=1),)
+    findings = find_malformed_urls(bookmarks)
+    assert len(findings) == 1
+    assert findings[0].check == "malformed-url"
+    assert "no scheme" in findings[0].message
+
+
+def test_find_malformed_urls_flags_http_with_no_host():
+    bookmarks = (make_bookmark(url="https:///path", line=1),)
+    findings = find_malformed_urls(bookmarks)
+    assert len(findings) == 1
+    assert "no host" in findings[0].message
+
+
+def test_find_malformed_urls_flags_whitespace():
+    bookmarks = (make_bookmark(url="https://example.com/a page", line=1),)
+    findings = find_malformed_urls(bookmarks)
+    assert len(findings) == 1
+    assert "whitespace" in findings[0].message
+
+
+def test_find_malformed_urls_ignores_javascript_urls():
+    bookmarks = (make_bookmark(url="javascript:void(0)", line=1),)
+    assert find_malformed_urls(bookmarks) == []
+
+
+def test_find_malformed_urls_ignores_empty_url():
+    bookmarks = (make_bookmark(url="", line=1),)
+    assert find_malformed_urls(bookmarks) == []
+
+
+def test_find_malformed_urls_allows_schemes_without_a_host():
+    bookmarks = (
+        make_bookmark(url="file:///home/user/notes.html", line=1),
+        make_bookmark(url="mailto:someone@example.com", line=2),
+        make_bookmark(url="about:blank", line=3),
+    )
+    assert find_malformed_urls(bookmarks) == []
+
+
+def test_find_malformed_urls_allows_well_formed_urls():
+    bookmarks = (make_bookmark(url="https://example.com/path?q=1", line=1),)
+    assert find_malformed_urls(bookmarks) == []
 
 
 def test_find_empty_folders_flags_folder_with_no_bookmarks_or_subfolders():

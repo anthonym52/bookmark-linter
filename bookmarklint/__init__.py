@@ -8,6 +8,7 @@ from .checks import (
     find_empty_folders,
     find_empty_titles,
     find_javascript_urls,
+    find_malformed_urls,
     lint_all,
 )
 from .config import ConfigError, load_config, parse_config
@@ -23,6 +24,7 @@ __all__ = [
     "find_empty_folders",
     "find_empty_titles",
     "find_javascript_urls",
+    "find_malformed_urls",
     "lint_all",
     "load_config",
     "parse_config",
