@@ -41,6 +41,27 @@ bookmarks.html:90: empty-folder: folder 'Someday' contains no bookmarks
 
 Exit code is 1 if any findings were reported, 0 if the file is clean.
 
+## JSON output
+
+Pass `--format json` to get findings as a single JSON object instead of
+plain text lines, for feeding into an editor plugin or a CI step:
+
+```
+bookmarklint --format json bookmarks.html
+```
+
+```json
+{
+  "file": "bookmarks.html",
+  "findings": [
+    {"line": 42, "check": "duplicate-url", "message": "duplicate bookmark for https://example.com/ (first seen at line 17)"}
+  ]
+}
+```
+
+`--format` accepts `text` (the default) or `json`. Exit codes are the same
+in both modes.
+
 ## Disabling checks
 
 By default all five checks run. To turn individual checks off, pass
@@ -106,5 +127,5 @@ Early skeleton. Five checks exist today: duplicate URLs, `javascript:` URLs,
 empty titles, empty folders, and malformed URLs (missing scheme, missing
 host, or stray whitespace). Each can be turned off via `--config`. The
 malformed-URL check is purely structural - it never makes a network request,
-so it won't catch a well-formed URL that happens to be dead. No JSON output
-mode yet.
+so it won't catch a well-formed URL that happens to be dead. Output can be
+text or JSON via `--format`. No `--fix` mode yet.
