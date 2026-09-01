@@ -96,3 +96,31 @@ def test_main_clean_file_exits_zero(tmp_path, capsys):
     assert exit_code == 0
     payload = json.loads(capsys.readouterr().out)
     assert payload["findings"] == []
+
+
+def test_main_fix_rewrites_file_and_drops_duplicate_findings(tmp_path, capsys):
+    bookmarks_file = tmp_path / "bookmarks.html"
+    bookmarks_file.write_text(BOOKMARKS_HTML, encoding="utf-8")
+
+    exit_code = main(["--fix", "--format", "json", str(bookmarks_file)])
+
+    captured = capsys.readouterr()
+    assert "removed 1 duplicate bookmark" in captured.err
+    payload = json.loads(captured.out)
+    assert payload["findings"] == []
+    assert exit_code == 0
+
+    contents = bookmarks_file.read_text(encoding="utf-8")
+    assert contents.count("https://example.com") == 1
+
+
+def test_main_fix_leaves_file_untouched_when_nothing_to_fix(tmp_path, capsys):
+    bookmarks_file = tmp_path / "bookmarks.html"
+    original = '<DL><p><DT><A HREF="https://example.com">Example</A></DL><p>'
+    bookmarks_file.write_text(original, encoding="utf-8")
+
+    exit_code = main(["--fix", str(bookmarks_file)])
+
+    assert exit_code == 0
+    assert capsys.readouterr().err == ""
+    assert bookmarks_file.read_text(encoding="utf-8") == original

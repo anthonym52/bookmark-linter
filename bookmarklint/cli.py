@@ -8,9 +8,10 @@ import sys
 
 from .checks import lint_all
 from .config import ConfigError, load_config
+from .fix import remove_duplicate_bookmarks
 from .parser import parse_bookmarks
 
-USAGE = "usage: bookmarklint [--config PATH] [--format text|json] <bookmarks.html>"
+USAGE = "usage: bookmarklint [--config PATH] [--format text|json] [--fix] <bookmarks.html>"
 
 
 def render_text(path, findings):
@@ -42,6 +43,7 @@ def main(argv=None):
 
     config_path = None
     output_format = "text"
+    fix = False
     positional = []
     args = iter(argv)
     for arg in args:
@@ -60,6 +62,8 @@ def main(argv=None):
             if output_format not in ("text", "json"):
                 print(f"--format must be 'text' or 'json', got {output_format!r}", file=sys.stderr)
                 return 2
+        elif arg == "--fix":
+            fix = True
         else:
             positional.append(arg)
 
@@ -81,6 +85,15 @@ def main(argv=None):
     path = positional[0]
     with open(path, encoding="utf-8") as handle:
         html_text = handle.read()
+
+    if fix:
+        fixed_text, removed_count = remove_duplicate_bookmarks(html_text)
+        if removed_count:
+            with open(path, "w", encoding="utf-8") as handle:
+                handle.write(fixed_text)
+            noun = "bookmark" if removed_count == 1 else "bookmarks"
+            print(f"{path}: removed {removed_count} duplicate {noun}", file=sys.stderr)
+            html_text = fixed_text
 
     bookmarks, folders = parse_bookmarks(html_text)
     findings = lint_all(bookmarks, folders, enabled_checks)

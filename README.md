@@ -81,6 +81,22 @@ are skipped. Check names match the ones printed in the output:
 bookmarklint --config bookmarklint.ini bookmarks.html
 ```
 
+## Fixing duplicates
+
+Pass `--fix` to have bookmarklint rewrite the file in place, dropping every
+duplicate bookmark but the first one seen for a given URL:
+
+```
+bookmarklint --fix bookmarks.html
+```
+
+This only touches what `duplicate-url` flags. `--fix` runs before the other
+checks, so a clean run afterward won't report `duplicate-url` findings for
+anything it removed; other findings (bookmarklets, empty titles, empty
+folders, malformed URLs) are left for you to fix by hand. If nothing needed
+fixing, the file is left untouched. `--fix` can be combined with `--config`
+and `--format`.
+
 ## Using it as a library
 
 The parser and every check are pure functions: given the same input they
@@ -128,4 +144,5 @@ empty titles, empty folders, and malformed URLs (missing scheme, missing
 host, or stray whitespace). Each can be turned off via `--config`. The
 malformed-URL check is purely structural - it never makes a network request,
 so it won't catch a well-formed URL that happens to be dead. Output can be
-text or JSON via `--format`. No `--fix` mode yet.
+text or JSON via `--format`. `--fix` removes exact duplicate bookmarks; the
+other findings are report-only for now.

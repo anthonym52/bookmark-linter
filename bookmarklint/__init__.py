@@ -12,6 +12,7 @@ from .checks import (
     lint_all,
 )
 from .config import ConfigError, load_config, parse_config
+from .fix import remove_duplicate_bookmarks
 
 __all__ = [
     "Bookmark",
@@ -28,4 +29,5 @@ __all__ = [
     "lint_all",
     "load_config",
     "parse_config",
+    "remove_duplicate_bookmarks",
 ]
