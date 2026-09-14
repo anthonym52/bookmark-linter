@@ -114,6 +114,17 @@ def test_main_fix_rewrites_file_and_drops_duplicate_findings(tmp_path, capsys):
     assert contents.count("https://example.com") == 1
 
 
+def test_main_missing_file_prints_error_and_exits_two(tmp_path, capsys):
+    missing_file = tmp_path / "does-not-exist.html"
+
+    exit_code = main([str(missing_file)])
+
+    assert exit_code == 2
+    err = capsys.readouterr().err
+    assert str(missing_file) in err
+    assert "No such file" in err
+
+
 def test_main_fix_leaves_file_untouched_when_nothing_to_fix(tmp_path, capsys):
     bookmarks_file = tmp_path / "bookmarks.html"
     original = '<DL><p><DT><A HREF="https://example.com">Example</A></DL><p>'

@@ -83,8 +83,12 @@ def main(argv=None):
             return 2
 
     path = positional[0]
-    with open(path, encoding="utf-8") as handle:
-        html_text = handle.read()
+    try:
+        with open(path, encoding="utf-8") as handle:
+            html_text = handle.read()
+    except OSError as error:
+        print(f"{path}: {error.strerror}", file=sys.stderr)
+        return 2
 
     if fix:
         fixed_text, removed_count = remove_duplicate_bookmarks(html_text)
