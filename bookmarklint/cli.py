@@ -93,8 +93,12 @@ def main(argv=None):
     if fix:
         fixed_text, removed_count = remove_duplicate_bookmarks(html_text)
         if removed_count:
-            with open(path, "w", encoding="utf-8") as handle:
-                handle.write(fixed_text)
+            try:
+                with open(path, "w", encoding="utf-8") as handle:
+                    handle.write(fixed_text)
+            except OSError as error:
+                print(f"{path}: {error.strerror}", file=sys.stderr)
+                return 2
             noun = "bookmark" if removed_count == 1 else "bookmarks"
             print(f"{path}: removed {removed_count} duplicate {noun}", file=sys.stderr)
             html_text = fixed_text

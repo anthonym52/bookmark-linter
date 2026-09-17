@@ -1,4 +1,8 @@
 import json
+import os
+import sys
+
+import pytest
 
 from bookmarklint.checks import Finding
 from bookmarklint.cli import main, render_json, render_text
@@ -123,6 +127,25 @@ def test_main_missing_file_prints_error_and_exits_two(tmp_path, capsys):
     err = capsys.readouterr().err
     assert str(missing_file) in err
     assert "No such file" in err
+
+
+@pytest.mark.skipif(
+    sys.platform == "win32" or (hasattr(os, "geteuid") and os.geteuid() == 0),
+    reason="permission bits don't block root or Windows",
+)
+def test_main_fix_write_failure_prints_error_and_exits_two(tmp_path, capsys):
+    bookmarks_file = tmp_path / "bookmarks.html"
+    bookmarks_file.write_text(BOOKMARKS_HTML, encoding="utf-8")
+    bookmarks_file.chmod(0o444)
+
+    try:
+        exit_code = main(["--fix", str(bookmarks_file)])
+    finally:
+        bookmarks_file.chmod(0o644)
+
+    assert exit_code == 2
+    err = capsys.readouterr().err
+    assert str(bookmarks_file) in err
 
 
 def test_main_fix_leaves_file_untouched_when_nothing_to_fix(tmp_path, capsys):

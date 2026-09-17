@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- `--fix` now reports a clean CLI error and exits 2 if the file can't be
+  written back (permission denied, read-only filesystem, etc.) instead of
+  crashing with a traceback.
+
 ## 0.1.0
 
 First release.
